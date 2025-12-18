@@ -24,8 +24,9 @@ FrappeTrack is designed for teams and organizations that use ERPNext and need a 
 
 ## Frontend (User Interface)
 1. Login Screen
-   
+
 ![FrappeTrack Login](Frappe%20Tracker/loginui.png)
+
 2. Main Screen
 
 ![FrappeTrack Login](Frappe%20Tracker/Timetracker.png)
