@@ -1,33 +1,41 @@
-### FrappeTrack
+# FrappeTrack
 
-Frappe Tracker
+FrappeTrack is a desktop-based time tracking application built using **Frappe**, **ERPNext**, and **Electron**.
 
-### Installation
+The app allows users to track time spent on tasks directly from their desktop with simple **Start, Pause, and Stop** controls. While tracking is active, the application captures screenshots at random intervals to provide work context and transparency.
 
-You can install this app using the [bench](https://github.com/frappe/bench) CLI:
+Once tracking is stopped, the recorded time, selected task details, and captured screenshots are automatically synced to **ERPNext Timesheets**, ensuring accurate and centralized time records.
 
-```bash
-cd $PATH_TO_YOUR_BENCH
-bench get-app $URL_OF_THIS_REPO --branch develop
-bench install-app frappetrack
-```
+FrappeTrack is designed for teams and organizations that use ERPNext and need a seamless, secure, and efficient way to monitor task-based work time, with future support for activity tracking and productivity insights.
 
-### Contributing
+--- 
 
-This app uses `pre-commit` for code formatting and linting. Please [install pre-commit](https://pre-commit.com/#installation) and enable it for this repository:
+## High-Level Architecture
+![FrappeTrack HLD](Frappe%20Tracker/high-level-arch.png)
+---
 
-```bash
-cd apps/frappetrack
-pre-commit install
-```
+## Backend API
+- Authentication validation APIs
+- Task & Timesheet fetch APIs
+- Timesheet creation/update API
+- Screenshot upload & attachment handling
+  
+---
 
-Pre-commit is configured to use the following tools for checking and formatting your code:
+## Frontend (User Interface)
+1. Login Screen
 
-- ruff
-- eslint
-- prettier
-- pyupgrade
+![FrappeTrack Login](Frappe%20Tracker/loginui.png)
 
-### License
+2. Main Screen
 
-mit
+![FrappeTrack Login](Frappe%20Tracker/Timetracker.png)
+
+3. More ui Image (Coming Soon)
+
+---
+
+## API Development 
+1. [X] Login API
+2. [X] Get Profile API
+3. [ ] timetracker API
