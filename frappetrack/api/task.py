@@ -3,7 +3,7 @@ from frappe import _
 
 
 @frappe.whitelist(allow_guest=True)
-def get_task_list()->dict:
+def get_task_list()-> dict:
     """
     Returns a list of open tasks.
     """
@@ -34,8 +34,35 @@ def get_task_list()->dict:
 
 
 @frappe.whitelist(allow_guest=True)
-def get_task_by_project(project: str):
+def get_task_by_project(project_id: str):
+    """
+    Fetches a list of 'Open' tasks associated with a specific Project ID.    
+    """
     try:
-        pass 
+        tasks = frappe.db.get_list("Task",
+            fields=["name", "subject", "status"],
+            filters={
+                "project": project_id,
+                "status": "Open"
+            }
+        )
+
+        if tasks:
+            return {
+                "status": "success",
+                "data": tasks,
+                "message": _("{0} tasks found for project {1}.").format(len(tasks), project_id)
+            }
+        
+t
+        else:
+            return {
+                "status": "success",
+                "data": [],
+                "message": _("No tasks found for this project.")
+            }
     except Exception:
-        raise
+        return {
+            "status": "failed",
+            "message": _("An unexpected error occurred. Please check Error Logs.")
+        }
