@@ -7,7 +7,7 @@ def get_employee_profile():
     Returns the employee details of the logged-in user.
     """
     try:
-        # 🔐 Guest check
+        # Guest check
         if frappe.session.user == "Guest":
             frappe.throw(
                 "Unauthorized: Please login first",
