@@ -1,5 +1,25 @@
+import { useEffect } from "react"
+import { useAuthStore } from "../store/authStore"
+import { useState } from "react"
 
 const Tracker = () => {
+    const { getProjects, getTask, projects, task } = useAuthStore()
+    const [selectedProject, setSelectedProject] = useState(null)
+    
+    useEffect(()=>{
+        getProjects()
+    },[])
+
+   
+    console.log(projects)
+    console.log(task)
+    async function handleProjectChange(e) {
+        const value = e.target.value;
+        console.log(value);
+
+        await getTask(value)
+
+    }
     return (
         <div className=" bg-gray-100 flex items-center justify-center min-h-screen">
 
@@ -12,13 +32,23 @@ const Tracker = () => {
 
                 <div className="flex gap-2 mb-5">
                     <select
+                    value={selectedProject}
+                    onChange={handleProjectChange}
                         className="flex-1 h-9 rounded-lg border border-gray-300 px-3 text-sm bg-white shadow-sm focus:outline-none focus:border-gray-600">
-                        <option value="">Project</option>
+                        
+                        <option value="">Select project</option>
+                        {projects.map((project) => (
+                             <option key={project.name} value={project.name}>{project.project_name}</option>
+                        ))}
+
                     </select>
 
                     <select
                         className="flex-1 h-9 rounded-lg border border-gray-300 px-3 text-sm bg-white shadow-sm focus:outline-none focus:border-gray-600">
-                        <option value="">Task</option>
+                        <option value="">Select project</option>
+                        {task.map((t) => {
+                            return <option key={t.name} value={t.name}>{t.subject}</option>
+                        })}
                     </select>
 
                     <select
