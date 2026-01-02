@@ -5,6 +5,7 @@ import { Toaster } from "react-hot-toast";
 import { useEffect } from "react";
 import { useAuthStore } from "./store/authStore";
 import ProtectedRoute from "./components/ProtectedRoute";
+import Tracker from "./pages/Tracker";
 
 function App() {
   const { user, isAuthenticated } = useAuthStore()
@@ -17,12 +18,20 @@ function App() {
     <>
       <Routes>
         <Route path="/" element={<Login />} />
-
+        
         <Route
           path="/user-profile"
           element={
             <ProtectedRoute>
               <Profile />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/time-tracker"
+          element={
+            <ProtectedRoute>
+              <Tracker />
             </ProtectedRoute>
           }
         />

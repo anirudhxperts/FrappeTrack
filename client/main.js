@@ -6,15 +6,14 @@ let loggedInUser = null;
 
 function createWindow() {
   mainWindow = new BrowserWindow({
-    width: 900,
-    height: 800,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       nodeIntegration: false,
       contextIsolation: true
     }
   });
-
+  mainWindow.setSize(1200,1000)
+  mainWindow.center()
   mainWindow.loadFile(path.join(__dirname,'../client/react/dist/index.html'));
 }
 
