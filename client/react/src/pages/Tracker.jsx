@@ -1,14 +1,27 @@
 import { useEffect, useRef, useState } from "react";
-import { useAuthStore } from "../store/authStore"
+import { useAuthStore } from "../store/authStore";
+import { useTimerStore } from "../store/timerStore";
+import { useScreenshotStore } from "../store/screenshotStore"
 
 const Tracker = () => {
-    const [seconds, setSeconds] = useState(0);
-    const [screenshots, setScreenshots] = useState([]);
+    const {
+        remainingDelay,
+        nextShotAt,
+        setSchedule,
+        clearSchedule,
+        screenshots,
+        addScreenshot,
+        clearScreenshots,
+    } = useScreenshotStore();
 
-    const { getProjects, getTask, getTimeSheetList, projects, task, timeSheet, user } = useAuthStore()
+    const { startTime, endTime } = useTimerStore()
+    const { getProjects, getTask, getTimeSheetList, projects, task, timeSheet, user, stopHandler } = useAuthStore()
     const [selectedProject, setSelectedProject] = useState(null);
     const [taskByProject, setTaskByProject] = useState(null)
     const [timeSheetValue, setTimeSheetValue] = useState(null)
+    const [description, setDescription] = useState(null)
+
+    const allSelected = selectedProject && taskByProject && timeSheetValue;
 
     useEffect(() => {
         getProjects()
@@ -19,6 +32,7 @@ const Tracker = () => {
     console.log(task)
     async function handleProjectChange(e) {
         const value = e.target.value;
+        setSelectedProject(value);
         console.log(value);
 
         await getTask(value)
@@ -26,6 +40,7 @@ const Tracker = () => {
     }
     async function handleTaskByProject(e) {
         const value = e.target.value;
+        setTaskByProject(value)
         console.log(value);
 
         await getTimeSheetList(value)
@@ -33,13 +48,13 @@ const Tracker = () => {
     }
     async function handleTimeSheet(e) {
         const value = e.target.value;
+        setTimeSheetValue(value)
         console.log(value);
 
         // await getTimeSheetList(value)
 
     }
 
-    const timerIntervalRef = useRef(null);
     const screenshotTimeoutRef = useRef(null);
 
     const sessionIdRef = useRef(1);
@@ -73,81 +88,119 @@ const Tracker = () => {
         });
 
         if (imgData) {
-            setScreenshots((prev) => [...prev, imgData]);
+            addScreenshot(imgData);
             imageIndexRef.current += 1;
         }
     };
 
     // ----------- SCREENSHOT LOOP ------------
-    const scheduleScreenshot = () => {
-        const delay = getRandomDelay();
+    const scheduleScreenshot = (delayOverride = null) => {
+        if (screenshotTimeoutRef.current) return;
+
+        const delay = delayOverride ?? getRandomDelay();
+
+        setSchedule(delay);
+
+        console.log("Next screenshot in", delay / 1000, "seconds");
 
         screenshotTimeoutRef.current = setTimeout(async () => {
+            screenshotTimeoutRef.current = null;
+            clearSchedule();
+
+            console.log("Taking screenshot now");
             await captureScreenshot();
-            scheduleScreenshot(); // schedule next
+
+            scheduleScreenshot(); // new random delay AFTER capture
         }, delay);
     };
 
+    //missing dropdown
+    const getMissingSelections = () => {
+        const missing = [];
+
+        if (!selectedProject) missing.push("project");
+        if (!taskByProject) missing.push("task");
+        if (!timeSheetValue) missing.push("timesheet");
+
+        return missing;
+    };
+
     // ------------ BUTTONS ------------------
+    const { seconds, start, pause, reset } = useTimerStore();
+
     const handleStart = () => {
         console.log("Start clicked");
+        const missing = getMissingSelections();
 
-        if (!timerIntervalRef.current) {
-            timerIntervalRef.current = setInterval(() => {
-                setSeconds((prev) => prev + 1);
-            }, 1000);
+        if (missing.length > 0) {
+            toast.error(`Please select ${missing.join(" and ")}`);
+            return;
+        }
+        start();
 
-            scheduleScreenshot();
+
+        if (!screenshotTimeoutRef.current) {
+            if (remainingDelay != null) {
+                scheduleScreenshot(remainingDelay);
+            } else {
+                scheduleScreenshot();
+            }
         }
     };
 
     const handlePause = () => {
-        clearInterval(timerIntervalRef.current);
-        clearTimeout(screenshotTimeoutRef.current);
+        const missing = getMissingSelections();
 
-        timerIntervalRef.current = null;
+        if (missing.length > 0) {
+            toast.error(`Please select ${missing.join(" and ")}`);
+            return;
+        }
+        pause();
+
+        if (nextShotAt) {
+            const remaining = Math.max(nextShotAt - Date.now(), 0);
+            setSchedule(remaining);
+        }
+
+        clearTimeout(screenshotTimeoutRef.current);
         screenshotTimeoutRef.current = null;
     };
-    /*
-    {
-        "timesheet": "TS-2025-00012",
-        "employee_id": "HR-001"
-        "time_log": {
-            "activity_type": "Development",
-            "from_time": "2025-12-31 10:00:00",
-            "to_time": "2025-12-31 12:30:00",
-            "hours": 2.5,
-            "project": "PROJ-0001",
-            "description": "test"
-        }
-    }
-    */
 
-    const handleStop = () => {
-        handlePause();
-        setSeconds(0);
-        setScreenshots([]);
+    const handleStop = async () => {
+        const missing = getMissingSelections();
+
+        if (missing.length > 0) {
+            toast.error(`Please select ${missing.join(" and ")}`);
+            return;
+        }
+        pause();
+        reset(); // ✅ logs end time + duration inside store
+
+        clearTimeout(screenshotTimeoutRef.current);
+        screenshotTimeoutRef.current = null;
+
+        clearSchedule();
+        clearScreenshots();
+
         sessionIdRef.current += 1;
         imageIndexRef.current = 1;
-
         const data = {
             "timesheet": timeSheet,
             "employee_id": user.employee.name,
             "time_log": {
                 "activity_type": taskByProject,
-                "from_time": starttime,
-                "to_time": "2025-12-31 12:30:00",
-                "hours": 2.5,
-                "project": "PROJ-0001",
-                "description": "test"
+                "from_time": startTime,
+                "to_time": endTime,
+                "project": selectedProject,
+                "task": taskByProject,
+                "description": description
             }
-        }
-    };
-
+        };
+        const res = await stopHandler(data)
+    }
     // ------------- CLEANUP -----------------
     useEffect(() => {
         return () => {
-            clearInterval(timerIntervalRef.current);
             clearTimeout(screenshotTimeoutRef.current);
         };
     }, []);
@@ -214,6 +267,7 @@ const Tracker = () => {
                         </label>
                         <textarea
                             id="taskDescription"
+                            onChange={(e) => setDescription(e.target.value)}
                             placeholder="Write details about the task..."
                             className="w-full min-h-[100px] p-4 rounded-2xl border border-gray-300 shadow-sm bg-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400 resize-none"
                         />
@@ -275,4 +329,4 @@ const Tracker = () => {
     );
 };
 
-export default Tracker;
+export default Tracker

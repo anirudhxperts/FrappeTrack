@@ -184,9 +184,14 @@ export const useAuthStore = create((set) => ({
     },
 
     stopHandler: async (data) => {
-        try {   
-            
-            const res = await axiosInstance.post("/",data)
+        try {
+            const res = await axiosInstance.post("/api/method/frappetrack.api.timesheet.add_time_log", data,
+                {
+                    headers: {
+                        'Authorization': `token ${apiKey}:${apiSecret}`,
+                    },
+                }
+            )
             console.log(res)
         } catch (error) {
             console.log(
