@@ -8,8 +8,8 @@ export const useAuthStore = create((set) => ({
     isAuthenticated: false,
     error: null,
     projects: [],
-    task:[],
-    timeSheet:[],
+    task: [],
+    timeSheet: [],
 
     // login: async (apiKey, apiSecret) => {
     //     set({ authLoading: true, error: null });
@@ -74,6 +74,7 @@ export const useAuthStore = create((set) => ({
                     { "apiKey": apiKey },
                     { "apiSecret": apiSecret }
                 ]
+               
                 localStorage.setItem("creds", JSON.stringify(creds))
                 toast.success("Profile fetched successfully")
                 return true;
@@ -88,8 +89,8 @@ export const useAuthStore = create((set) => ({
     getProjects: async () => {
         try {
             // apiSecret
-            const [{ apiKey }, {apiSecret}] = JSON.parse(localStorage.getItem("creds"));
-            
+            const [{ apiKey }, { apiSecret }] = JSON.parse(localStorage.getItem("creds"));
+
             console.log(apiKey, apiSecret)
 
             const res = await axiosInstance.get(
@@ -106,7 +107,7 @@ export const useAuthStore = create((set) => ({
 
             if (data?.message?.status) {
                 set({ projects: data.message.data });
-                toast.success("Projects fetched successfully")
+                // toast.success("Projects fetched successfully")
                 return true;
             }
             toast.error("Unable to fetch projects")
@@ -119,8 +120,8 @@ export const useAuthStore = create((set) => ({
         console.log("hitting get_task")
         try {
             // apiSecret
-            const [{ apiKey }, {apiSecret}] = JSON.parse(localStorage.getItem("creds"));
-            
+            const [{ apiKey }, { apiSecret }] = JSON.parse(localStorage.getItem("creds"));
+
             console.log(apiKey, apiSecret)
 
             const res = await axiosInstance.get(
@@ -137,7 +138,7 @@ export const useAuthStore = create((set) => ({
 
             if (data?.message?.status) {
                 set({ task: data.message.data });
-                toast.success("Task fetched successfully")
+                // toast.success("Task fetched successfully")
                 return true;
             }
             toast.error("Unable to fetch tasks")
@@ -150,8 +151,8 @@ export const useAuthStore = create((set) => ({
         console.log("hitting timesheet")
         try {
             // apiSecret
-            const [{ apiKey }, {apiSecret}] = JSON.parse(localStorage.getItem("creds"));
-            
+            const [{ apiKey }, { apiSecret }] = JSON.parse(localStorage.getItem("creds"));
+
             console.log(apiKey, apiSecret)
 
             const res = await axiosInstance.get(
@@ -168,7 +169,7 @@ export const useAuthStore = create((set) => ({
 
             if (data?.message?.status) {
                 set({ timeSheet: data.message.data });
-                toast.success("Time fetched successfully")
+                // toast.success("Time fetched successfully")
                 return true;
             }
             toast.error("Unable to fetch tasks")
