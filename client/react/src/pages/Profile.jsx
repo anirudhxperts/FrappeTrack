@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useAuthStore } from "../store/authStore";
 import fav from '../assets/favicon.webp'
+import { Link } from 'react-router-dom'
 
 const Profile = () => {
   const { user } = useAuthStore()
@@ -56,7 +57,7 @@ const Profile = () => {
             {user.employee.designation}
           </p>
 
-          
+
         </div>
 
         {/* Divider */}
@@ -70,11 +71,13 @@ const Profile = () => {
             Edit Profile
           </button>
 
-          <button
-            className="w-full bg-gradient-to-r from-blue-500 to-indigo-600 text-white py-2.5 rounded-xl font-medium shadow hover:scale-[1.02] hover:shadow-lg transition"
+          <Link
+            to="/time-tracker"
           >
-            Start Tracker
-          </button>
+            <button className="w-full bg-gradient-to-r from-blue-500 to-indigo-600 text-white py-2.5 rounded-xl font-medium shadow hover:scale-[1.02] hover:shadow-lg transition mb-3">
+               Tracker
+            </button>
+          </Link>
 
           <button
             onClick={handleLogout}

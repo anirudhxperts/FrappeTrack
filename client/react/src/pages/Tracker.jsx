@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useAuthStore } from "../store/authStore";
 import { useTimerStore } from "../store/timerStore";
 import { useScreenshotStore } from "../store/screenshotStore"
+import { toast } from 'react-hot-toast'
 
 const Tracker = () => {
     const {
@@ -14,10 +15,14 @@ const Tracker = () => {
         clearScreenshots,
     } = useScreenshotStore();
 
-    const { getProjects, getTask, getTimeSheetList, projects, task, timeSheet } = useAuthStore()
+    const { startTime, endTime } = useTimerStore()
+    const { getProjects, getTask, getTimeSheetList, projects, task, timeSheet, user, stopHandler } = useAuthStore()
     const [selectedProject, setSelectedProject] = useState(null);
     const [taskByProject, setTaskByProject] = useState(null)
     const [timeSheetValue, setTimeSheetValue] = useState(null)
+    const [description, setDescription] = useState(null)
+
+    const allSelected = selectedProject && taskByProject && timeSheetValue;
 
     useEffect(() => {
         getProjects()
@@ -28,6 +33,7 @@ const Tracker = () => {
     console.log(task)
     async function handleProjectChange(e) {
         const value = e.target.value;
+        setSelectedProject(value);
         console.log(value);
 
         await getTask(value)
@@ -35,6 +41,7 @@ const Tracker = () => {
     }
     async function handleTaskByProject(e) {
         const value = e.target.value;
+        setTaskByProject(value)
         console.log(value);
 
         await getTimeSheetList(value)
@@ -42,6 +49,7 @@ const Tracker = () => {
     }
     async function handleTimeSheet(e) {
         const value = e.target.value;
+        setTimeSheetValue(value)
         console.log(value);
 
         // await getTimeSheetList(value)
@@ -107,13 +115,31 @@ const Tracker = () => {
         }, delay);
     };
 
+    //missing dropdown
+    const getMissingSelections = () => {
+        const missing = [];
+
+        if (!selectedProject) missing.push("project");
+        if (!taskByProject) missing.push("task");
+        if (!timeSheetValue) missing.push("timesheet");
+
+        return missing;
+    };
 
     // ------------ BUTTONS ------------------
     const { seconds, start, pause, reset } = useTimerStore();
 
     const handleStart = () => {
         console.log("Start clicked");
+
+        const missing = getMissingSelections();
+
+        if (missing.length > 0) {
+            toast.error(`Please select ${missing.join(" and ")}`);
+            return;
+        }
         start();
+
 
         if (!screenshotTimeoutRef.current) {
             if (remainingDelay != null) {
@@ -136,7 +162,13 @@ const Tracker = () => {
         screenshotTimeoutRef.current = null;
     };
 
-    const handleStop = () => {
+    const handleStop = async () => {
+        const missing = getMissingSelections();
+
+        if (missing.length > 0) {
+            toast.error(`Please select ${missing.join(" and ")}`);
+            return;
+        }
         pause();
         reset(); // ✅ logs end time + duration inside store
 
@@ -148,9 +180,26 @@ const Tracker = () => {
 
         sessionIdRef.current += 1;
         imageIndexRef.current = 1;
-    };
-
-
+        // activity type
+        const taskObj = task.filter(t => t.name == taskByProject)
+        console.log("taskobject", taskObj, taskObj[0].subject, task[0]["subject"])
+        const data = {
+            "timesheet": timeSheet,
+            "employee": user.employee.name,
+            "time_log": {
+                // "activity_type": taskObj[0].subject,
+                "activity_type": "Coding",
+                "from_time": startTime,
+                "to_time": endTime,
+                "hours": "54",
+                "project": selectedProject,
+                "task": taskByProject,
+                "description": description,
+                "screenshots": [{}]
+            }
+        };
+        const res = await stopHandler(data)
+    }
     // ------------- CLEANUP -----------------
     useEffect(() => {
         return () => {
@@ -214,6 +263,17 @@ const Tracker = () => {
                         </select>
                     </div>
 
+                    <div className="mb-6 w-full">
+                        <label className="block text-gray-700 font-medium mb-2" htmlFor="taskDescription">
+                            Task Description
+                        </label>
+                        <textarea
+                            id="taskDescription"
+                            onChange={(e) => setDescription(e.target.value)}
+                            placeholder="Write details about the task..."
+                            className="w-full min-h-[100px] p-4 rounded-2xl border border-gray-300 shadow-sm bg-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400 resize-none"
+                        />
+                    </div>
                     {/* Buttons */}
                     <div className="flex justify-center gap-6 mb-6">
                         <button
@@ -271,4 +331,4 @@ const Tracker = () => {
     );
 };
 
-export default Tracker;
+export default Tracker
