@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import axiosInstance from "../api/axiosInstance";
 import toast from "react-hot-toast";
+import { useTimerStore } from "./timerStore";
 
 export const useAuthStore = create((set) => ({
     user: null,
@@ -185,14 +186,38 @@ export const useAuthStore = create((set) => ({
 
     stopHandler: async (data) => {
         try {
-            const res = await axiosInstance.post("/api/method/frappetrack.api.timesheet.add_time_log", data,
+            const [{ apiKey }, { apiSecret }] = JSON.parse(localStorage.getItem("creds"));
+
+            const jsonData = JSON.parse(JSON.stringify(data));
+            const now = new Date();
+
+            const formattedTime = now
+                .toLocaleString('en-GB', {
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit',
+                    hourCycle: 'h23'
+                })
+                .replace(/\//g, '-')                         // 06-01-2026, 03:56:36
+                .replace(/(\d{2})-(\d{2})-(\d{4})/, '$3-$2-$1') // 2026-01-06, 03:56:36
+                .replace(', ', ' ');                         // remove comma
+            useTimerStore.setState({ endTime: formattedTime })
+            jsonData.time_log.to_time = formattedTime
+
+            console.log("timesheet data", jsonData)
+
+
+            const res = await axiosInstance.post("/api/method/frappetrack.api.timesheet.add_time_log", jsonData,
                 {
                     headers: {
                         'Authorization': `token ${apiKey}:${apiSecret}`,
                     },
                 }
             )
-            console.log(res)
+            console.log("response from timesheet", res)
         } catch (error) {
             console.log(
                 "Error while stopping",

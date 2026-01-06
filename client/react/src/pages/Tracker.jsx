@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useAuthStore } from "../store/authStore";
 import { useTimerStore } from "../store/timerStore";
 import { useScreenshotStore } from "../store/screenshotStore"
+import { toast } from 'react-hot-toast'
 
 const Tracker = () => {
     const {
@@ -184,16 +185,22 @@ const Tracker = () => {
 
         sessionIdRef.current += 1;
         imageIndexRef.current = 1;
+        // activity type
+        const taskObj = task.filter(t => t.name == taskByProject)
+        console.log("taskobject", taskObj, taskObj[0].subject, task[0]["subject"])
         const data = {
             "timesheet": timeSheet,
-            "employee_id": user.employee.name,
+            "employee": user.employee.name,
             "time_log": {
-                "activity_type": taskByProject,
+                // "activity_type": taskObj[0].subject,
+                "activity_type": "Coding",
                 "from_time": startTime,
                 "to_time": endTime,
+                "hours": "54",
                 "project": selectedProject,
                 "task": taskByProject,
-                "description": description
+                "description": description,
+                "screenshots":[{}]
             }
         };
         const res = await stopHandler(data)
