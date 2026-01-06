@@ -1,5 +1,7 @@
 import frappe
 from frappe import _
+import base64
+from frappe.utils.file_manager import save_file
 
 @frappe.whitelist(allow_guest=False)
 def get_timesheet_by_task(task_id: str):
@@ -122,6 +124,7 @@ def add_time_log(timesheet, time_log):
             )
             employee = employee[0] if employee else None
 
+
         if not employee:
             frappe.throw("Employee must be specified or mapped to session user")
 
@@ -131,6 +134,8 @@ def add_time_log(timesheet, time_log):
         # Set employee
         ts.employee = employee
 
+        # Set parent project
+        ts.parent_project = time_log.get("project")
         # Append time log
         ts.append("time_logs", {
             "activity_type": time_log.get("activity_type"),
@@ -159,6 +164,38 @@ def add_time_log(timesheet, time_log):
 
     except Exception as e:
         frappe.log_error(frappe.get_traceback(), "Add Time Log Error")
+        return {
+            "status": "error",
+            "message": str(e)
+        }
+
+@frappe.whitelist(allow_guest=True)
+def upload_screenshot(file_name: str, file_data: str, timesheet_id: str):
+    try:
+        # Decode base64 data
+        content = base64.b64decode(file_data)
+
+        # Save file in File DocType & attach to Timesheet
+        file_doc = save_file(
+            fname=file_name,
+            content=content,
+            dt="Timesheet",
+            dn=timesheet_id,
+            is_private=0
+        )
+
+        return {
+            "status": "success",
+            "message": "Screenshot uploaded successfully",
+            "file_name": file_doc.file_name,
+            "file_url": file_doc.file_url,
+            "file_id": file_doc.name
+        }
+    except Exception as e:
+        frappe.log_error(
+            title="Upload Screenshot Error",
+            message=frappe.get_traceback()
+        )
         return {
             "status": "error",
             "message": str(e)
