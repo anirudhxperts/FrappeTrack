@@ -86,6 +86,8 @@ ipcMain.handle("save-creds", async (event, apiKey, apiSecret) => {
 ipcMain.handle("get-creds", async (event, data) => {
   try {
     const creds = store.get("creds");
+    console.log(creds);
+    
     return creds
   } catch (error) {
     console.error("Error fetching credentials ipc:", error);

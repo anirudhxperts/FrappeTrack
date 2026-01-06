@@ -88,7 +88,7 @@ const Tracker = () => {
             imageIndex: imageIndexRef.current,
         });
 
-        console.log(imgData)
+        console.log("imgdata",imgData)
         if (imgData.thumbnail) {
             addScreenshot(imgData.thumbnail, imgData.screenshotTime);
             imageIndexRef.current += 1;
@@ -170,10 +170,10 @@ const Tracker = () => {
         console.log("taskobject", taskObj, taskObj[0].subject, task[0]["subject"])
 
         // screenshots into a string format - 
-        const reader = new FileReader();
-        reader.onload = function () {
-            screenshots.map()
-        }
+        // const reader = new FileReader();
+        // reader.onload = function () {
+        //     screenshots.map()
+        // }
         const data = {
             "timesheet": timeSheet,
             "employee": user.employee.name,
@@ -326,7 +326,7 @@ const Tracker = () => {
                             {screenshots.map((src, index) => (
                                 <img
                                     key={index}
-                                    src={src}
+                                    src={src.thumbnail}
                                     alt="screenshot"
                                     className="rounded-xl shadow-md hover:scale-105 transition"
                                 />
