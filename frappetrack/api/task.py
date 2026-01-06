@@ -38,12 +38,13 @@ def get_task_list()-> dict:
 @frappe.whitelist(allow_guest=False)
 def get_task_by_project(project_id: str):
     """
-    Fetches a list of 'Open' tasks associated with a specific Project ID.    
+    Fetches a list of 'Open' tasks associated with a specific Project ID.
     """
     try:
         user = frappe.session.user
-        
-        tasks = frappe.db.get_list("Task",
+
+        tasks = frappe.db.get_list(
+            "Task",
             fields=["name", "subject", "status"],
             filters={
                 "project": project_id,
@@ -55,18 +56,19 @@ def get_task_by_project(project_id: str):
             return {
                 "status": "success",
                 "data": tasks,
-                "message": _("{0} tasks found for project {1}.").format(len(tasks), project_id)
+                "message": _("{0} tasks found for project {1}.")
+                .format(len(tasks), project_id)
             }
-        
-t
         else:
             return {
                 "status": "success",
                 "data": [],
                 "message": _("No tasks found for this project.")
             }
-    except Exception:
+
+    except Exception as e:
+        frappe.log_error(frappe.get_traceback(), "get_task_by_project failed")
         return {
             "status": "failed",
-            "message": _("An unexpected error occurred. Please check Error Logs.")
+            "message": str(e)
         }
