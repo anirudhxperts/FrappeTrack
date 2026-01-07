@@ -13,6 +13,7 @@ const Tracker = () => {
         screenshots,
         addScreenshot,
         clearScreenshots,
+        send_screenshot
     } = useScreenshotStore();
 
     const { startTime, endTime } = useTimerStore()
@@ -28,6 +29,7 @@ const Tracker = () => {
         getProjects()
     }, [])
 
+    console.log("screenshots: ", screenshots)
 
     console.log(projects)
     console.log(task)
@@ -88,8 +90,20 @@ const Tracker = () => {
             imageIndex: imageIndexRef.current,
         });
 
-        console.log("imgdata",imgData)
+        console.log("imgdata", imgData)
         if (imgData.thumbnail) {
+            const validStr = imgData.thumbnail.split(",")[1];
+            console.log(validStr);
+            let data = {
+                "file_name": imgData.screenshotTime,
+                "file_data": validStr,
+                "timesheet_id": timeSheetValue
+            }
+            const res = await send_screenshot(data);
+            if(!res){
+                return toast.error("error while sending screeenshot");
+            }
+            console.log(res);
             addScreenshot(imgData.thumbnail, imgData.screenshotTime);
             imageIndexRef.current += 1;
         }
@@ -191,7 +205,7 @@ const Tracker = () => {
         };
         const res = await stopHandler(data)
         if (!res) toast.error("Unable to send the screenshots")
-        console.log("screenshots",screenshots)
+        console.log("screenshots", screenshots)
         const missing = getMissingSelections();
 
         if (missing.length > 0) {
@@ -326,7 +340,7 @@ const Tracker = () => {
                             {screenshots.map((src, index) => (
                                 <img
                                     key={index}
-                                    src={src.thumbnail}
+                                    src={src.screenshot}
                                     alt="screenshot"
                                     className="rounded-xl shadow-md hover:scale-105 transition"
                                 />
