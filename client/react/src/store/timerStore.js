@@ -5,6 +5,7 @@ export const useTimerStore = create((set, get) => ({
   seconds: 0,
   isRunning: false,
   intervalId: null,
+  
   startTime: null,
   endTime: null,
   totalTime: null,

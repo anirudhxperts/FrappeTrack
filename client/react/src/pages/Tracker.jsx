@@ -3,6 +3,7 @@ import { useAuthStore } from "../store/authStore";
 import { useTimerStore } from "../store/timerStore";
 import { useScreenshotStore } from "../store/screenshotStore"
 import { toast } from 'react-hot-toast'
+import { useCreateStore } from "../store/createStore";
 
 const Tracker = () => {
     const {
@@ -15,18 +16,21 @@ const Tracker = () => {
         clearScreenshots,
         send_screenshot
     } = useScreenshotStore();
-
-    const { startTime, endTime } = useTimerStore()
-    const { getProjects, getTask, getTimeSheetList, projects, task, timeSheet, user, stopHandler } = useAuthStore()
+    const { createTimeSheet, timeSheet, stopHandler, getProjects, getTask, getTimeSheetList, projects, task, } = useCreateStore()
+    const { startTime, endTime, isRunning } = useTimerStore()
+    const { user } = useAuthStore()
     const [selectedProject, setSelectedProject] = useState(null);
     const [taskByProject, setTaskByProject] = useState(null)
     const [timeSheetValue, setTimeSheetValue] = useState(null)
     const [description, setDescription] = useState(null)
+    const [isTimeSheet, setIsTimeSheet] = useState(false)
 
     const allSelected = selectedProject && taskByProject && timeSheetValue;
 
     useEffect(() => {
         getProjects()
+        console.log("user: ", user);
+        console.log("project", selectedProject);
     }, [])
 
     console.log("screenshots: ", screenshots)
@@ -52,11 +56,16 @@ const Tracker = () => {
     async function handleTimeSheet(e) {
         const value = e.target.value;
         setTimeSheetValue(value)
-        console.log(value);
-
+        setIsTimeSheet(true)
+        if (value !== "create-timesheet") {
+            console.log("changing isTimesheet")
+            setIsTimeSheet(false)
+        }
+        console.log("timesheet value: ", value);
         // await getTimeSheetList(value)
 
     }
+
 
     const screenshotTimeoutRef = useRef(null);
 
@@ -192,8 +201,8 @@ const Tracker = () => {
             "timesheet": timeSheet,
             "employee": user.employee.name,
             "time_log": {
-                // "activity_type": taskObj[0].subject,
-                "activity_type": "Coding",
+                "activity_type": taskObj[0].subject,
+                // "activity_type": "Coding",
                 "from_time": startTime,
                 "to_time": endTime,
                 "hours": "54",
@@ -212,7 +221,7 @@ const Tracker = () => {
             toast.error(`Please select ${missing.join(" and ")}`);
             return;
         }
-        pause();
+        // pause();
         reset(); // ✅ logs end time + duration inside store
 
         clearTimeout(screenshotTimeoutRef.current);
@@ -286,6 +295,7 @@ const Tracker = () => {
           hover:border-blue-400 transition"
                         >
                             <option value="">Select timesheet</option>
+                            <option value="create-timesheet">Create timesheet</option>
                             {timeSheet.map(tsheet => (
                                 <option key={tsheet.name} value={tsheet.name}>
                                     {tsheet.name}
@@ -313,46 +323,73 @@ const Tracker = () => {
                     {/* Action Buttons */}
                     <div className="flex justify-center gap-6 mb-8">
 
-                        {/* Start */}
-                        <button
-                            onClick={handleStart}
-                            title="Start"
-                            className="w-14 h-14 rounded-lg bg-blue-600
-        flex items-center justify-center
-        shadow hover:bg-blue-700 active:scale-95 transition"
-                        >
-                            <svg className="w-6 h-6 fill-white" viewBox="0 0 24 24">
-                                <polygon points="5,3 19,12 5,21" />
-                            </svg>
-                        </button>
+                        {!isTimeSheet ? (
 
-                        {/* Pause */}
-                        <button
-                            onClick={handlePause}
-                            title="Pause"
-                            className="w-14 h-14 rounded-lg bg-sky-500
+                            <>
+                                {!isRunning ?
+                                    (
+                                        // start
+                                        <button
+                                            onClick={handleStart}
+                                            title="Start"
+                                            className="w-full p-2 rounded-lg bg-blue-600
+        flex items-center justify-center
+        shadow hover:bg-blue-700 active:scale-95 transition text-white"
+                                        >
+                                            <svg className="w-6 h-6 fill-white" viewBox="0 0 24 24">
+                                                <polygon points="5,3 19,12 5,21" />
+                                            </svg>
+                                            Start Timer
+                                        </button>
+                                    ) : (
+                                        <button
+                                            onClick={handleStop}
+                                            title="Stop"
+                                            className="w-full p-2 rounded-lg bg-slate-600
+        flex items-center justify-center
+        shadow hover:bg-slate-700 active:scale-95 transition text-white"
+                                        >
+                                            <svg className="w-6 h-6 fill-white" viewBox="0 0 24 24">
+                                                <rect x="5" y="5" width="14" height="14" />
+                                            </svg>
+                                            Stop Timer
+                                        </button>
+                                    )
+
+                                }
+
+                                {/* Pause */}
+                                {/* <button
+                                    onClick={handlePause}
+                                    title="Pause"
+                                    className="w-14 h-14 rounded-lg bg-sky-500
         flex items-center justify-center
         shadow hover:bg-sky-600 active:scale-95 transition"
-                        >
-                            <svg className="w-6 h-6 fill-white" viewBox="0 0 24 24">
-                                <rect x="6" y="4" width="4" height="16" />
-                                <rect x="14" y="4" width="4" height="16" />
-                            </svg>
-                        </button>
+                                >
+                                    <svg className="w-6 h-6 fill-white" viewBox="0 0 24 24">
+                                        <rect x="6" y="4" width="4" height="16" />
+                                        <rect x="14" y="4" width="4" height="16" />
+                                    </svg>
+                                </button> */}
 
-                        {/* Stop */}
-                        <button
-                            onClick={handleStop}
-                            title="Stop"
-                            className="w-14 h-14 rounded-lg bg-slate-600
-        flex items-center justify-center
-        shadow hover:bg-slate-700 active:scale-95 transition"
-                        >
-                            <svg className="w-6 h-6 fill-white" viewBox="0 0 24 24">
-                                <rect x="5" y="5" width="14" height="14" />
-                            </svg>
-                        </button>
+                                {/* Stop */}
 
+
+                            </>
+                        ) : (
+                            <>
+                                <button
+                                    className="bg-black
+      rounded-xl p-2 text-xl text-center font-mono text-white
+      tracking-widest shadow-inner w-full"
+                                    onClick={() => createTimeSheet({ "employee": user.employee.name, "parent_project": selectedProject, "time_logs": [] })}
+                                >
+                                    Create
+                                </button>
+                            </>
+                        )
+
+                        }
                     </div>
 
 
