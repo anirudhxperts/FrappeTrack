@@ -6,33 +6,46 @@ from frappe.utils.file_manager import save_file
 @frappe.whitelist(allow_guest=False)
 def get_timesheet_by_task(task_id: str):
     """
-    Fetch Draft Timesheets linked to a specific Task
+    Fetch UNIQUE Draft Timesheets linked to a specific Task
     """
     try:
-        user = frappe.session.user  
-
-        timesheets = frappe.db.get_list(
-            "Timesheet",
-            fields=["name", "parent_project", "employee", "employee_name", "status"],
-            filters={
-                "task": task_id,
-                "status": "Draft"
-            }
+        # Step 1: Get unique Timesheet names from child table
+        timesheet_names = frappe.db.get_all(
+            "Timesheet Detail",
+            filters={"task": task_id},
+            pluck="parent",
+            distinct=True
         )
 
-        if timesheets:
-            return {
-                "status": "success",
-                "data": timesheets,
-                "message": _("{0} draft timesheets found for task {1}.")
-                .format(len(timesheets), task_id)
-            }
-        else:
+        if not timesheet_names:
             return {
                 "status": "success",
                 "data": [],
                 "message": _("No draft timesheets found for this task.")
             }
+
+        # Step 2: Fetch draft Timesheets only once
+        timesheets = frappe.db.get_all(
+            "Timesheet",
+            filters={
+                "name": ["in", timesheet_names],
+                "status": "Draft"
+            },
+            fields=[
+                "name",
+                "parent_project",
+                "employee",
+                "employee_name",
+                "status"
+            ]
+        )
+
+        return {
+            "status": "success",
+            "data": timesheets,
+            "message": _("{0} unique draft timesheets found for task {1}.")
+                .format(len(timesheets), task_id)
+        }
 
     except Exception as e:
         frappe.log_error(frappe.get_traceback(), "Get Timesheet By Task API Error")
@@ -41,49 +54,14 @@ def get_timesheet_by_task(task_id: str):
             "message": str(e)
         }
 
+
 @frappe.whitelist(allow_guest=False)
-def create_timesheet(timesheet_data):
-    """
-    Create Timesheet with Time Logs
-    :param timesheet_data: JSON string or dict
-    """
-
+def create_timesheet(employee: str, parent_project: str):
     try:
-        user = frappe.session.user
-        # If data comes as JSON string (from API call)
-        if isinstance(timesheet_data, str):
-            timesheet_data = frappe.parse_json(timesheet_data)
-
-        # Create Timesheet document
         ts = frappe.new_doc("Timesheet")
+        ts.employee = employee
+        ts.parent_project = parent_project
 
-        # ---- Parent Fields ----
-        ts.title = timesheet_data.get("title")
-        ts.naming_series = timesheet_data.get("naming_series", "TS-.YYYY.-")
-        ts.company = timesheet_data.get("company")
-        ts.employee = timesheet_data.get("employee")
-        ts.employee_name = timesheet_data.get("employee_name")
-        ts.parent_project = timesheet_data.get("parent_project")
-        ts.start_date = timesheet_data.get("start_date")
-        ts.end_date = timesheet_data.get("end_date")
-
-        # ---- Child Table : time_logs ----
-        for log in timesheet_data.get("time_logs", []):
-            ts.append("time_logs", {
-                "activity_type": log.get("activity_type"),
-                "from_time": log.get("from_time"),
-                "to_time": log.get("to_time"),
-                "hours": log.get("hours"),
-                "completed": log.get("completed"),
-                "project": log.get("project"),
-                "task": log.get("task"),
-                "is_billable": log.get("is_billable", 0),
-                "billing_hours": log.get("billing_hours", 0),
-                "billing_rate": log.get("billing_rate", 0),
-                "costing_rate": log.get("costing_rate", 0),
-            })
-
-        # Insert document
         ts.insert(ignore_permissions=True)
         frappe.db.commit()
 
@@ -98,7 +76,6 @@ def create_timesheet(timesheet_data):
             "status": "error",
             "message": str(e)
         }
-
 
 @frappe.whitelist(allow_guest=False)
 def add_time_log(timesheet, time_log):

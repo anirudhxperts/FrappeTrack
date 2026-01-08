@@ -72,3 +72,16 @@ def get_task_by_project(project_id: str):
             "status": "failed",
             "message": str(e)
         }
+
+
+@frappe.whitelist(allow_guest=False)
+def create_task(project_id: str, subject: str, priority: str):
+    try:
+        pass
+
+    except Exception as e:
+        frappe.log_error(frappe.get_traceback(), "create_task failed")
+        return {
+            "status": "failed",
+            "message": str(e)
+        }
